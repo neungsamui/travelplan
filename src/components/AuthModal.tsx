@@ -104,10 +104,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
           return;
         }
 
-        // If email confirmation is required, Supabase returns user but session is null
+        // If email confirmation is required
         if (supaData.user && !supaData.session) {
           setTab('otp_verify');
-          setInfoMessage(`ระบบได้ส่งรหัสยืนยัน OTP ไปที่อีเมล ${email} เรียบร้อยแล้ว กรุณาเปิดกล่องจดหมายเพื่อนำรหัสมากรอกยืนยัน 💌`);
+          setInfoMessage(`ระบบของ Supabase ได้ส่งอีเมลยืนยันตัวตนไปที่ ${email} เรียบร้อยแล้ว 💌\n(กรุณาเปิดอีเมลฉบับล่าสุดจาก "Supabase Auth" แล้วคลิกปุ่ม "Confirm email address" ได้เลยครับ)`);
           setLoading(false);
           return;
         }
@@ -262,42 +262,79 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
           </div>
         )}
 
-        {/* OTP VERIFICATION VIEW */}
+        {/* OTP / EMAIL CONFIRMATION VIEW */}
         {tab === 'otp_verify' ? (
-          <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                รหัสยืนยัน OTP จากอีเมล ({email}):
-              </label>
-              <div className="relative">
-                <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                <input
-                  type="text"
-                  required
-                  placeholder="เช่น 123456"
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.trim())}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm font-mono tracking-widest text-center text-lg font-bold"
-                />
-              </div>
+          <div className="space-y-4">
+            <div className="bg-rose-50/70 p-4 rounded-2xl border border-pink-200 text-center">
+              <span className="text-3xl block mb-2">📬</span>
+              <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                Supabase ได้ส่งอีเมลยืนยันไปที่ <b>{email}</b> แล้ว
+              </p>
+              <p className="text-[11px] text-rose-600 mt-1">
+                👉 เพียงเปิดอีเมลจาก <b>Supabase Auth</b> แล้วคลิกปุ่ม <b>"Confirm email address"</b>
+              </p>
             </div>
 
             <button
-              type="submit"
-              disabled={loading || !otpCode.trim()}
-              className="w-full py-3 rounded-2xl bg-linear-to-r from-pink-500 to-rose-400 hover:from-pink-600 hover:to-rose-500 disabled:opacity-50 text-white font-cute font-bold shadow-md shadow-pink-200 transition flex items-center justify-center gap-2"
+              type="button"
+              onClick={() => {
+                setTab('login');
+                setError('');
+                setInfoMessage('กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบ');
+              }}
+              className="w-full py-3.5 rounded-2xl bg-linear-to-r from-pink-500 to-rose-400 hover:from-pink-600 hover:to-rose-500 text-white font-cute font-bold shadow-md shadow-pink-200 transition flex items-center justify-center gap-2"
             >
-              {loading ? 'กำลังตรวจสอบ...' : 'ยืนยันรหัสและเข้าใช้งาน 💖'}
+              <CheckCircle2 className="w-4 h-4" />
+              <span>ฉันกดยืนยันในอีเมลแล้ว → เข้าสู่ระบบเลย 💕</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => setTab('register')}
-              className="w-full text-center text-xs text-slate-400 hover:text-slate-600 hover:underline pt-2"
-            >
-              ← กลับไปแก้ไขอีเมล
-            </button>
-          </form>
+            {/* Optional 6-digit OTP manual input */}
+            <div className="pt-2 border-t border-slate-100">
+              <details className="text-xs text-slate-500">
+                <summary className="cursor-pointer hover:text-slate-700 font-semibold mb-2">
+                  หรือต้องการกรอกรหัส OTP 6 หลักด้วยตนเอง?
+                </summary>
+                <form onSubmit={handleVerifyOtp} className="space-y-2 mt-2">
+                  <input
+                    type="text"
+                    placeholder="เช่น 123456"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.trim())}
+                    className="w-full px-4 py-2 rounded-xl border border-pink-200 text-center font-mono text-sm"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!otpCode.trim()}
+                    className="w-full py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700 transition"
+                  >
+                    ยืนยันด้วยรหัส 6 หลัก
+                  </button>
+                </form>
+              </details>
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-slate-400 pt-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  setError('');
+                  setInfoMessage('กำลังส่งอีเมลยืนยันซ้ำ...');
+                  await supabase.auth.resend({ type: 'signup', email: email.trim() });
+                  setInfoMessage('ส่งอีเมลยืนยันใหม่อีกครั้งเรียบร้อยแล้วครับ 💌');
+                }}
+                className="hover:text-rose-500 hover:underline"
+              >
+                ขอส่งอีเมลใหม่อีกครั้ง
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab('register')}
+                className="hover:text-slate-600 hover:underline"
+              >
+                ← เปลี่ยนอีเมล
+              </button>
+            </div>
+          </div>
         ) : (
           /* LOGIN & REGISTER VIEW */
           <form onSubmit={handleSubmit} className="space-y-4">
