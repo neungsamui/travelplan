@@ -6,6 +6,7 @@ interface NavbarProps {
   currentUser: User | null;
   onOpenAuth: () => void;
   onOpenPairing: () => void;
+  onOpenProfile: () => void;
   onOpenAdmin: () => void;
   onGoHome: () => void;
   onLogout: () => void;
@@ -17,6 +18,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   onOpenAuth,
   onOpenPairing,
+  onOpenProfile,
   onOpenAdmin,
   onGoHome,
   onLogout,
@@ -91,17 +93,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               {/* User Avatar & Info */}
-              <div className="flex items-center gap-2 pl-2 border-l border-pink-100">
+              <div 
+                onClick={onOpenProfile}
+                className="flex items-center gap-2 pl-2 border-l border-pink-100 cursor-pointer group"
+                title="คลิกเพื่อดูและแก้ไขโปรไฟล์ 👤"
+              >
                 <div 
-                  onClick={onOpenPairing}
-                  className="w-9 h-9 rounded-full overflow-hidden border-2 border-pink-300 shadow-xs cursor-pointer hover:ring-2 hover:ring-pink-300 transition"
-                  title={`โค้ดของคุณ: ${currentUser.coupleCode}`}
+                  className="w-9 h-9 rounded-full overflow-hidden border-2 border-pink-300 shadow-xs group-hover:ring-2 group-hover:ring-rose-400 group-hover:scale-105 transition"
                 >
                   <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
                 </div>
                 <div className="hidden lg:block text-left">
-                  <div className="text-xs font-semibold text-slate-800 leading-tight">
-                    {currentUser.name}
+                  <div className="text-xs font-semibold text-slate-800 leading-tight group-hover:text-rose-600 transition flex items-center gap-1">
+                    <span>{currentUser.name}</span>
+                    <span className="text-[10px] text-slate-400">✎</span>
                   </div>
                   <div className="text-[10px] text-pink-500 font-mono">
                     {currentUser.coupleCode}
@@ -110,8 +115,12 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 {/* Logout Button */}
                 <button
-                  onClick={onLogout}
-                  className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition"
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLogout();
+                  }}
+                  className="p-1.5 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 transition ml-1"
                   title="ออกจากระบบ"
                 >
                   <LogOut className="w-4 h-4" />

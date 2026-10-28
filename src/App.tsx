@@ -7,6 +7,7 @@ import { TripList } from './components/TripList';
 import { ItineraryView } from './components/ItineraryView';
 import { AdminDashboard } from './components/AdminDashboard';
 import { CouplePairingModal } from './components/CouplePairingModal';
+import { UserProfileModal } from './components/UserProfileModal';
 import { AuthModal } from './components/AuthModal';
 
 export const App: React.FC = () => {
@@ -19,6 +20,7 @@ export const App: React.FC = () => {
   const [activeView, setActiveView] = useState<'trips' | 'itinerary' | 'admin'>('trips');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isPairingOpen, setIsPairingOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Listen for Supabase email confirmation or login callback
   useEffect(() => {
@@ -127,6 +129,7 @@ export const App: React.FC = () => {
         currentUser={currentUser}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenPairing={() => setIsPairingOpen(true)}
+        onOpenProfile={() => setIsProfileOpen(true)}
         onOpenAdmin={() => setActiveView('admin')}
         onGoHome={() => setActiveView('trips')}
         onLogout={handleLogout}
@@ -168,13 +171,23 @@ export const App: React.FC = () => {
       />
 
       {currentUser && (
-        <CouplePairingModal
-          isOpen={isPairingOpen}
-          onClose={() => setIsPairingOpen(false)}
-          currentUser={currentUser}
-          onUpdateUser={(updated) => setCurrentUser(updated)}
-          onSwitchUser={handleSwitchUser}
-        />
+        <>
+          <CouplePairingModal
+            isOpen={isPairingOpen}
+            onClose={() => setIsPairingOpen(false)}
+            currentUser={currentUser}
+            onUpdateUser={(updated) => setCurrentUser(updated)}
+            onSwitchUser={handleSwitchUser}
+          />
+
+          <UserProfileModal
+            isOpen={isProfileOpen}
+            onClose={() => setIsProfileOpen(false)}
+            currentUser={currentUser}
+            onUpdateUser={(updated) => setCurrentUser(updated)}
+            onOpenPairing={() => setIsPairingOpen(true)}
+          />
+        </>
       )}
 
       {/* Sweet Footer */}
