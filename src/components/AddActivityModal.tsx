@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PlaceActivity, PlaceCategory } from '../types';
+import { searchPlaces } from '../services/placeSearch';
 import { X, Clock, MapPin, DollarSign, Heart, Sparkles, Search, Loader2, CheckCircle2, Navigation } from 'lucide-react';
 
 interface AddActivityModalProps {
@@ -87,7 +88,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Debounced Place Search (like Google Maps)
+  // Debounced Place Search (supports Thai attached text like บางบอน1 ซอย16)
   useEffect(() => {
     if (!title.trim() || title.length < 2 || hasSelectedFromMap) {
       setSearchResults([]);
@@ -97,26 +98,15 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
     const timer = setTimeout(async () => {
       setSearching(true);
       try {
-        const encoded = encodeURIComponent(title.trim());
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&limit=6&accept-language=th,en`,
-          {
-            headers: {
-              'User-Agent': 'SweetJourneyApp/1.0'
-            }
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setSearchResults(data);
-          setShowSearchDropdown(data.length > 0);
-        }
+        const data = await searchPlaces(title);
+        setSearchResults(data);
+        setShowSearchDropdown(data.length > 0);
       } catch (err) {
         console.error('Search error:', err);
       } finally {
         setSearching(false);
       }
-    }, 400);
+    }, 350);
 
     return () => clearTimeout(timer);
   }, [title, hasSelectedFromMap]);

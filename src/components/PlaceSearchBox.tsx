@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, MapPin, Plus, Loader2, Sparkles, Navigation, Star } from 'lucide-react';
 import { PlaceActivity, PlaceCategory } from '../types';
+import { searchPlaces } from '../services/placeSearch';
 
 interface SearchResultItem {
   place_id: number | string;
@@ -40,26 +41,15 @@ export const PlaceSearchBox: React.FC<PlaceSearchBoxProps> = ({
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const encoded = encodeURIComponent(query.trim());
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&limit=6&accept-language=th,en`,
-          {
-            headers: {
-              'User-Agent': 'SweetJourneyApp/1.0'
-            }
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setResults(data);
-          setIsOpen(true);
-        }
+        const data = await searchPlaces(query);
+        setResults(data);
+        setIsOpen(data.length > 0);
       } catch (err) {
         console.error('Search error:', err);
       } finally {
         setLoading(false);
       }
-    }, 450);
+    }, 350);
 
     return () => clearTimeout(timer);
   }, [query]);
