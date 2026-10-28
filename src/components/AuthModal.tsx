@@ -85,11 +85,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
 
         const generatedCode = 'LOVE-' + Math.floor(1000 + Math.random() * 9000);
 
-        // Attempt Supabase signUp with Email Verification OTP
+        // Attempt Supabase signUp with Email Verification
         const { data: supaData, error: supaErr } = await supabase.auth.signUp({
           email: email.trim(),
           password,
           options: {
+            emailRedirectTo: window.location.origin,
             data: {
               name: name.trim(),
               coupleCode: generatedCode

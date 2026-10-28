@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Trip } from './types';
 import { storage } from './services/storage';
+import { supabase } from './services/supabase';
 import { Navbar } from './components/Navbar';
 import { TripList } from './components/TripList';
 import { ItineraryView } from './components/ItineraryView';
@@ -18,6 +19,43 @@ export const App: React.FC = () => {
   const [activeView, setActiveView] = useState<'trips' | 'itinerary' | 'admin'>('trips');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isPairingOpen, setIsPairingOpen] = useState(false);
+
+  // Listen for Supabase email confirmation or login callback
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const coupleCode = session.user.user_metadata?.coupleCode || 'LOVE-' + Math.floor(1000 + Math.random() * 9000);
+        const userName = session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'เราสองคน';
+
+        const supaUser: User = {
+          id: session.user.id,
+          name: userName,
+          email: session.user.email || '',
+          avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(userName)}`,
+          coupleCode,
+          role: session.user.email?.includes('admin') ? 'admin' : 'user',
+          createdAt: session.user.created_at,
+          lastLoginAt: new Date().toISOString()
+        };
+
+        const users = storage.getUsers();
+        const existingIdx = users.findIndex((u) => u.email.toLowerCase() === supaUser.email.toLowerCase());
+        if (existingIdx >= 0) {
+          users[existingIdx] = { ...users[existingIdx], ...supaUser };
+        } else {
+          users.push(supaUser);
+        }
+        storage.saveUsers(users);
+        storage.setCurrentUser(supaUser);
+        storage.recordLogin(supaUser);
+        setCurrentUser(supaUser);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Refresh trips whenever currentUser changes
   useEffect(() => {
