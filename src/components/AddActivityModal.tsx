@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PlaceActivity, PlaceCategory } from '../types';
-import { X, Clock, MapPin, DollarSign, Heart, Sparkles } from 'lucide-react';
+import { X, Clock, MapPin, DollarSign, Heart, Sparkles, Search, Loader2, CheckCircle2, Navigation } from 'lucide-react';
 
 interface AddActivityModalProps {
   isOpen: boolean;
@@ -8,6 +8,14 @@ interface AddActivityModalProps {
   onSave: (activity: PlaceActivity) => void;
   initialData?: Partial<PlaceActivity> | null;
   dayNumber: number;
+}
+
+interface SearchPlaceResult {
+  place_id: number | string;
+  display_name: string;
+  lat: string;
+  lon: string;
+  type?: string;
 }
 
 const CATEGORIES: { id: PlaceCategory; label: string; icon: string; color: string }[] = [
@@ -35,6 +43,13 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
   const [lat, setLat] = useState<number>(18.7961);
   const [lng, setLng] = useState<number>(98.9793);
 
+  // Search autocomplete states
+  const [searchResults, setSearchResults] = useState<SearchPlaceResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [hasSelectedFromMap, setHasSelectedFromMap] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title || '');
@@ -45,6 +60,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
       setAddress(initialData.address || '');
       if (initialData.lat) setLat(initialData.lat);
       if (initialData.lng) setLng(initialData.lng);
+      setHasSelectedFromMap(true);
     } else {
       setTitle('');
       setCategory('cafe');
@@ -52,8 +68,84 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
       setNotes('');
       setBudget('');
       setAddress('');
+      setLat(18.7961);
+      setLng(98.9793);
+      setHasSelectedFromMap(false);
     }
+    setSearchResults([]);
+    setShowSearchDropdown(false);
   }, [initialData, isOpen]);
+
+  // Click outside listener for dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowSearchDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Debounced Place Search (like Google Maps)
+  useEffect(() => {
+    if (!title.trim() || title.length < 2 || hasSelectedFromMap) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const encoded = encodeURIComponent(title.trim());
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&limit=6&accept-language=th,en`,
+          {
+            headers: {
+              'User-Agent': 'SweetJourneyApp/1.0'
+            }
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setSearchResults(data);
+          setShowSearchDropdown(data.length > 0);
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+      } finally {
+        setSearching(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [title, hasSelectedFromMap]);
+
+  const guessCategory = (name: string, type?: string): PlaceCategory => {
+    const text = (name + ' ' + (type || '')).toLowerCase();
+    if (text.includes('cafe') || text.includes('coffee') || text.includes('คาเฟ่') || text.includes('ชา')) return 'cafe';
+    if (text.includes('food') || text.includes('restaurant') || text.includes('ร้านอาหาร') || text.includes('ครัว') || text.includes('ข้าว')) return 'food';
+    if (text.includes('hotel') || text.includes('resort') || text.includes('โรงแรม') || text.includes('รีสอร์ท') || text.includes('โฮสเทล')) return 'hotel';
+    if (text.includes('mall') || text.includes('market') || text.includes('ตลาด') || text.includes('ช้อปปิ้ง')) return 'shopping';
+    if (text.includes('airport') || text.includes('station') || text.includes('สนามบิน') || text.includes('สถานี')) return 'transport';
+    return 'sightseeing';
+  };
+
+  const handleSelectSearchResult = (item: SearchPlaceResult) => {
+    const parts = item.display_name.split(',');
+    const mainTitle = parts[0].trim();
+    const addr = parts.slice(1, 4).join(', ').trim();
+    const itemLat = parseFloat(item.lat);
+    const itemLng = parseFloat(item.lon);
+
+    setTitle(mainTitle);
+    setAddress(addr || item.display_name);
+    setLat(itemLat);
+    setLng(itemLng);
+    setCategory(guessCategory(mainTitle, item.type));
+    setHasSelectedFromMap(true);
+    setShowSearchDropdown(false);
+  };
 
   if (!isOpen) return null;
 
@@ -68,7 +160,7 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
       time: time || '10:00',
       notes: notes.trim(),
       budget: budget ? parseFloat(budget) : undefined,
-      address: address.trim() || 'พิกัดที่กำหนดเอง',
+      address: address.trim() || 'พิกัดบนแผนที่ Google Maps',
       lat: Number(lat) || 18.7961,
       lng: Number(lng) || 98.9793,
       rating: initialData?.rating || 4.8,
@@ -82,11 +174,11 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-      <div className="relative w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-pink-100 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95">
+      <div className="relative w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-pink-100 max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in-95">
         
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition"
         >
           <X className="w-5 h-5" />
         </button>
@@ -100,25 +192,90 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
             {initialData?.id ? 'แก้ไขสถานที่ / กิจกรรม ✏️' : 'เพิ่มสถานที่ในแพลนเที่ยว 🌸'}
           </h3>
           <p className="text-xs text-slate-500 mt-1">
-            ระบุเวลา และบันทึกโน้ตหวานๆ ให้แฟนเห็น
+            พิมพ์ค้นหาสถานที่ระบบจะค้นหาจาก Google Maps ให้อัตโนมัติ
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           
-          {/* Title */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              ชื่อสถานที่ หรือกิจกรรม: *
+          {/* TITLE & LIVE SEARCH AUTOCOMPLETE */}
+          <div ref={dropdownRef} className="relative">
+            <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+              <span>ชื่อสถานที่ หรือพิมพ์ค้นหา: *</span>
+              {searching && (
+                <span className="text-rose-500 text-[11px] flex items-center gap-1 font-normal">
+                  <Loader2 className="w-3 h-3 animate-spin" /> กำลังค้นหาแผนที่...
+                </span>
+              )}
             </label>
-            <input
-              type="text"
-              required
-              placeholder="เช่น Transit No.8 Cafe หรือ กินหมูกระทะบนดอย"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm font-semibold"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                required
+                placeholder="เช่น แม่โจ้, ประตูท่าแพ, One Nimman, วัดพระธาตุ..."
+                value={title}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setHasSelectedFromMap(false);
+                }}
+                onFocus={() => {
+                  if (searchResults.length > 0) setShowSearchDropdown(true);
+                }}
+                className="w-full pl-10 pr-4 py-3 rounded-2xl border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm font-semibold shadow-xs"
+              />
+              <Search className="w-4 h-4 text-pink-400 absolute left-3.5 top-3.5" />
+            </div>
+
+            {/* Google Maps Style Autocomplete Dropdown */}
+            {showSearchDropdown && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-2xl shadow-xl border border-pink-200 z-50 divide-y divide-pink-50 max-h-64 overflow-y-auto animate-in fade-in zoom-in-95">
+                <div className="p-2 bg-rose-50/80 px-3 text-[11px] font-bold text-rose-600 flex items-center justify-between">
+                  <span>เลือกสถานที่ที่ต้องการปักหมุด 📍</span>
+                  <span className="text-[10px] text-slate-400 font-normal">คลิกเพื่อเลือก</span>
+                </div>
+                {searchResults.map((item) => {
+                  const parts = item.display_name.split(',');
+                  const mainName = parts[0].trim();
+                  const subAddr = parts.slice(1, 4).join(', ').trim();
+
+                  return (
+                    <div
+                      key={item.place_id}
+                      onClick={() => handleSelectSearchResult(item)}
+                      className="p-3 hover:bg-rose-50/50 cursor-pointer transition flex items-start gap-2.5 text-left"
+                    >
+                      <MapPin className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <div className="text-xs sm:text-sm font-bold text-slate-800 truncate">
+                          {mainName}
+                        </div>
+                        <div className="text-[11px] text-slate-400 truncate">
+                          {subAddr || item.display_name}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Coordinates / Map Pin Confirmation Badge */}
+            {hasSelectedFromMap && (
+              <div className="mt-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>ปักหมุดพิกัด Google Maps เรียบร้อย: <b>{lat.toFixed(4)}, {lng.toFixed(4)}</b></span>
+                </span>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-emerald-700 hover:underline text-[11px] font-bold"
+                >
+                  เปิดดู ↗
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Category Selection */}
@@ -172,14 +329,14 @@ export const AddActivityModal: React.FC<AddActivityModalProps> = ({
             </div>
           </div>
 
-          {/* Address */}
+          {/* Address / Note */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5 text-pink-500" /> ที่อยู่ หรือจุดสังเกต:
             </label>
             <input
               type="text"
-              placeholder="เช่น ถนนนิมมานเหมินท์ ซอย 9"
+              placeholder="เช่น อำเภอสันทราย, จังหวัดเชียงใหม่"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               className="w-full px-3 py-2 rounded-xl border border-pink-200 focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm"

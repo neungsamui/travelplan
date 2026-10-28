@@ -42,7 +42,12 @@ export const PlaceSearchBox: React.FC<PlaceSearchBoxProps> = ({
       try {
         const encoded = encodeURIComponent(query.trim());
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&limit=6&accept-language=th,en`
+          `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&addressdetails=1&limit=6&accept-language=th,en`,
+          {
+            headers: {
+              'User-Agent': 'SweetJourneyApp/1.0'
+            }
+          }
         );
         if (response.ok) {
           const data = await response.json();
