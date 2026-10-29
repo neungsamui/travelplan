@@ -74,7 +74,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
           onLoginSuccess(res.user);
           onClose();
         } else {
-          setError(supaErr?.message || res.message || 'เข้าสู่ระบบไม่สำเร็จ ตรวจสอบอีเมลหรือรหัสผ่าน');
+          if (supaErr?.message?.includes('Invalid login credentials')) {
+            setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือคุณอาจยังไม่ได้คลิกลิงก์ยืนยันใน Gmail ครับ 💌 (หากลืมรหัส หรือต้องการตั้งใหม่ กดปุ่ม "ลืมรหัสผ่าน?" ด้านล่างได้เลยครับ)');
+          } else {
+            setError(supaErr?.message || res.message || 'เข้าสู่ระบบไม่สำเร็จ ตรวจสอบอีเมลหรือรหัสผ่าน');
+          }
         }
       } else if (tab === 'register') {
         if (!name.trim()) {
