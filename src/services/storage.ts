@@ -315,13 +315,14 @@ export const storage = {
   getCurrentUser(): User | null {
     const raw = localStorage.getItem(CURRENT_USER_KEY);
     if (!raw) {
-      // Default auto-login to Tonkla so user sees the app immediately
-      const defaultUser = INITIAL_USERS[0];
-      this.setCurrentUser(defaultUser);
-      return defaultUser;
+      return null;
     }
     try {
-      return JSON.parse(raw);
+      const u = JSON.parse(raw);
+      if (u && (u.email === 'arunjamsri@gmail.com' || u.email === 'admin@sweet.love')) {
+        u.role = 'admin';
+      }
+      return u;
     } catch {
       return null;
     }

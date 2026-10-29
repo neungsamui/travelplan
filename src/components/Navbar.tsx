@@ -78,19 +78,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               )}
 
-              {/* Admin Portal Button */}
-              <button
-                onClick={onOpenAdmin}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition ${
-                  activeView === 'admin'
-                    ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-                title="ระบบจัดการหลังบ้าน & สถิติการเข้าใช้งาน"
-              >
-                <Shield className="w-4 h-4 text-purple-600" />
-                <span className="hidden sm:inline">ระบบหลังบ้าน</span>
-              </button>
+              {/* Admin Portal Button - Only visible for Admin email */}
+              {(currentUser.role === 'admin' || currentUser.email === 'arunjamsri@gmail.com' || currentUser.email === 'admin@sweet.love') && (
+                <button
+                  onClick={onOpenAdmin}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition ${
+                    activeView === 'admin'
+                      ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                  title="ระบบจัดการหลังบ้าน & สถิติการเข้าใช้งาน"
+                >
+                  <Shield className="w-4 h-4 text-purple-600" />
+                  <span className="hidden sm:inline">ระบบหลังบ้าน</span>
+                </button>
+              )}
 
               {/* User Avatar & Info */}
               <div 

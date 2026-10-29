@@ -405,46 +405,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
           </form>
         )}
 
-        {/* Quick Demo Logins */}
-        <div className="mt-6 pt-5 border-t border-slate-100">
-          <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 text-center">
-            ⚡ หรือคลิกเดียวเพื่อทดสอบระบบจำลอง:
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('tonkla@sweet.love')}
-              className="p-2 rounded-xl bg-pink-50 hover:bg-pink-100 border border-pink-200 text-xs font-medium text-pink-800 text-left transition"
-            >
-              <span className="block font-bold">ต้นกล้า 🐻</span>
-              <span className="text-[10px] text-pink-500">tonkla@sweet.love</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('namwaan@sweet.love')}
-              className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-xs font-medium text-rose-800 text-left transition"
-            >
-              <span className="block font-bold">น้ำหวาน 🐰</span>
-              <span className="text-[10px] text-rose-500">namwaan@sweet.love</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('admin@sweet.love')}
-              className="p-2 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-xs font-medium text-purple-800 text-left transition col-span-2 flex items-center justify-between"
-            >
-              <div>
-                <span className="block font-bold flex items-center gap-1">
-                  <Shield className="w-3.5 h-3.5 text-purple-600" /> แอดมิน โรส 🌹 (เข้าดูหลังบ้าน)
-                </span>
-                <span className="text-[10px] text-purple-500">admin@sweet.love</span>
-              </div>
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-purple-200 text-purple-800 font-semibold">
-                Admin
-              </span>
-            </button>
-          </div>
-        </div>
-
       </div>
     </div>
   );

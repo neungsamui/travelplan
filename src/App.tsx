@@ -139,7 +139,7 @@ export const App: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 pb-16">
-        {activeView === 'admin' ? (
+        {activeView === 'admin' && (currentUser?.role === 'admin' || currentUser?.email === 'arunjamsri@gmail.com' || currentUser?.email === 'admin@sweet.love') ? (
           <AdminDashboard onBack={() => setActiveView('trips')} />
         ) : activeView === 'itinerary' && activeTrip ? (
           <ItineraryView

@@ -200,48 +200,6 @@ export const CouplePairingModal: React.FC<CouplePairingModalProps> = ({
           </div>
         )}
 
-        {/* DEMO QUICK SWITCHER FOR TESTING */}
-        <div className="mt-6 pt-5 border-t border-slate-100">
-          <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 text-center">
-            💡 ทดสอบสลับบัญชีเพื่อลองผูกโค้ดไป-มา:
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => onSwitchUser('tonkla@sweet.love')}
-              className={`p-2 rounded-xl text-xs font-medium border text-center transition ${
-                currentUser.email === 'tonkla@sweet.love'
-                  ? 'bg-rose-100 border-rose-300 text-rose-800 font-bold'
-                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              ต้นกล้า 🐻
-              <span className="block text-[10px] text-slate-400 font-mono">LOVE-5201</span>
-            </button>
-            <button
-              onClick={() => onSwitchUser('namwaan@sweet.love')}
-              className={`p-2 rounded-xl text-xs font-medium border text-center transition ${
-                currentUser.email === 'namwaan@sweet.love'
-                  ? 'bg-rose-100 border-rose-300 text-rose-800 font-bold'
-                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              น้ำหวาน 🐰
-              <span className="block text-[10px] text-slate-400 font-mono">LOVE-1314</span>
-            </button>
-            <button
-              onClick={() => onSwitchUser('mild@sweet.love')}
-              className={`p-2 rounded-xl text-xs font-medium border text-center transition ${
-                currentUser.email === 'mild@sweet.love'
-                  ? 'bg-rose-100 border-rose-300 text-rose-800 font-bold'
-                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              น้องมายด์ 🐱
-              <span className="block text-[10px] text-slate-400 font-mono">LOVE-7788</span>
-            </button>
-          </div>
-        </div>
-
       </div>
     </div>
   );
