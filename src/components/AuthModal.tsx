@@ -391,6 +391,35 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
               </div>
             </div>
 
+            {tab === 'login' && (
+              <div className="flex justify-end -mt-1">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!email.trim()) {
+                      setError('กรุณาระบุอีเมลด้านบน เพื่อรับลิงก์รีเซ็ตรหัสผ่าน');
+                      return;
+                    }
+                    setLoading(true);
+                    try {
+                      await supabase.auth.resetPasswordForEmail(email.trim(), {
+                        redirectTo: window.location.origin
+                      });
+                      setInfoMessage(`ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่ ${email} เรียบร้อยแล้ว กรุณาเปิดอีเมลเพื่อตั้งรหัสใหม่ครับ 💌`);
+                      setError('');
+                    } catch (err: any) {
+                      setError(err.message || 'ส่งลิงก์ไม่สำเร็จ');
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="text-[11px] text-pink-600 hover:text-rose-700 hover:underline font-semibold"
+                >
+                  ลืมรหัสผ่าน? (ส่งลิงก์รีเซ็ตไปที่เมล)
+                </button>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading}
